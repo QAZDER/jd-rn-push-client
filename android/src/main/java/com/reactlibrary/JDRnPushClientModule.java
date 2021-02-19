@@ -1,9 +1,13 @@
 package com.reactlibrary;
 
+import android.content.Intent;
+import android.util.Log;
+
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Callback;
+import com.reactlibrary.JDRnPushClientService;
 
 public class JDRnPushClientModule extends ReactContextBaseJavaModule {
 
@@ -20,8 +24,12 @@ public class JDRnPushClientModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void sampleMethod(String stringArgument, int numberArgument, Callback callback) {
+    public void startPushService(String stringArgument, int numberArgument, Callback callback) {
         // TODO: Implement some actually useful functionality
-        callback.invoke("Received numberArgument: " + numberArgument + " stringArgument: " + stringArgument);
+        Log.d("Azder", "startPushService is called...");
+        Intent intent1 = new Intent(getApplicationContext(), JDRnPushClientService.class);
+        getApplicationContext().startService(intent1);
+
+//        callback.invoke("Received numberArgument: " + numberArgument + " stringArgument: " + stringArgument);
     }
 }
