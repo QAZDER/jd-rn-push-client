@@ -2,4 +2,8 @@ import { NativeModules } from 'react-native';
 
 const { JDRnPushClient } = NativeModules;
 
-export default JDRnPushClient;
+async function JDPushService() {
+  console.log('JDPushService is called...');
+}
+
+export default { JDRnPushClient, JDPushService };
