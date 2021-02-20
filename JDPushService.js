@@ -1,5 +1,5 @@
-
-module.exports = async () => {
-
+async function JDPushService() {
   console.log('start www');
-};
+}
+
+export { JDPushService }
