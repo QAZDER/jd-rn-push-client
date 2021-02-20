@@ -27,8 +27,8 @@ public class JDRnPushClientModule extends ReactContextBaseJavaModule {
     public void startPushService(String stringArgument, int numberArgument, Callback callback) {
         // TODO: Implement some actually useful functionality
         Log.d("Azder", "startPushService is called...");
-        Intent intent1 = new Intent(getApplicationContext(), JDRnPushClientService.class);
-        getApplicationContext().startService(intent1);
+        Intent intent1 = new Intent(getReactApplicationContext(), JDRnPushClientService.class);
+        getReactApplicationContext().startService(intent1);
 
 //        callback.invoke("Received numberArgument: " + numberArgument + " stringArgument: " + stringArgument);
     }
