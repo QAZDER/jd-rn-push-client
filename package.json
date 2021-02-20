@@ -9,7 +9,8 @@
     "android",
     "index.js",
     "ios",
-    "jd-rn-push-client.podspec"
+    "jd-rn-push-client.podspec",
+    "JDPushService.js"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
