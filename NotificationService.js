@@ -2,7 +2,7 @@
  * created by ZhouRd on 2019/1/14
  */
 import { Platform } from 'react-native';
-//import PushNotification from 'react-native-push-notification';
+import PushNotification from 'react-native-push-notification';
 
 export default class NotificationService {
 

@@ -15,10 +15,36 @@ import NotificationService from "./NotificationService";
  * 2.用户登录状态改变
  */
 
+let host = '';
+let token = '';
+
+let ws;
+
+let connect;
+
+// 定时器id
+let timeoutId;
+
+const SHORT_TIME = 5 * 1000;
+const LONG_TIME = 15 * 60 * 1000;
+let reConnectTime = SHORT_TIME;
+
+let countTimes = 0;
+
 async function JDPushService() {
-  const SHORT_TIME = 5 * 1000;
-  const LONG_TIME = 15 * 60 * 1000;
-  let reConnectTime = SHORT_TIME;
+
+  let connectCount = 0;
+
+  let isFirstLoad = false;
+
+
+  // 网络变更事件监听，状态可用时，进行连接(模拟器网络发生变化不生效)
+  NetInfo.addEventListener((NetInfoState) => {
+    // 应用首次打开为了避免触发，加入连接次数判断
+    console.log('NetInfoState: ', NetInfoState);
+    (NetInfoState.isConnected && isFirstLoad) ? startNewConnection(true) : console.log('network is not available');
+    isFirstLoad = true;
+  })();
 
   // 推送消息处理
   function handlingNotification(data) {
@@ -26,112 +52,100 @@ async function JDPushService() {
   }
 
   const notification = new NotificationService(handlingNotification);
-  // 定时器id
-  let timeoutId;
 
-  // websocket连接地址
-  let host;
-
-  let connectCount = 0;
-
-  let ws;
-
-  let isFirstLoad = false;
-
-  // 网络变更事件监听，状态可用时，进行连接(模拟器网络发生变化不生效)
-  NetInfo.addEventListener((NetInfoState) => {
-    // 应用首次打开为了避免触发，加入连接次数判断
-    (NetInfoState.isConnected && isFirstLoad) ? DeviceEventEmitter.emit('immediateConnect') : log.i('network is not available');
-    isFirstLoad = true;
-  })();
-
-  // 打开连接
-  DeviceEventEmitter.addListener('immediateConnect', () => {
-    reConnect(true);
-  });
-
-  // 关闭连接
-  DeviceEventEmitter.addListener('closeConnect', () => {
-    ws.close();
-  });
-
-  function connect() {
-    // 失败连接次数超过6次,改为15分钟重连
-    connectCount > 5 ? reConnectTime = LONG_TIME : reConnectTime = SHORT_TIME;
-    connectCount++;
-    (ws && ws.readyState === 1) ? ws.close() : '';
-    ws = new WebSocket(`ws://${host}/websocket/push`, null, {
-      headers: { Authorization: 'Bearer ' + window.token }
-    });
-    // ws = new WebSocket('ws://192.168.10.151:8000');
-    log.i('webSocket start connect, connectCount: ' + connectCount, reConnectTime);
-
-    ws.onopen = () => {
-      // 连接次数清空
-      connectCount = 0;
-      log.i('webSocket connect success');
-    };
-
-    ws.onmessage = ({ data }) => {
-      const msgObj = JSON.parse(data);
-      log.i('message data: ', new Date().toString(), msgObj);
-      const sendBackObj = {
-        id: msgObj.id,
-        type: msgObj.type,
-        user: 12, // 固定
-      };
-      // 收到消息后，send back，会将该条消息标记为已读
-      ws.send(JSON.stringify(sendBackObj));
-      log.i(JSON.stringify(sendBackObj));
-
-      notification._localNotification({
-        title: msgObj.title,
-        message: msgObj.content,
-        extraData: msgObj.sendbody,
+  connect = function () {
+    if (host && token) {
+      // 失败连接次数超过10次,改为15分钟重连
+      connectCount > 9 ? reConnectTime = LONG_TIME : reConnectTime = SHORT_TIME;
+      (ws && ws.readyState === 1) ? ws.close() : '';
+      let url = `ws://${host}/websocket/push`;
+      // const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJjdCI6MywidWlkIjoiMTkxMDQ1IiwiaXNzIjoiZWFwIiwiZXhwIjoxNjE2NTc2NDc1LCJpYXQiOjE2MTM5ODQ0NzUsImp0aSI6ImVhcCIsInRlbmFudCI6Im1haW4iLCJrZXkiOiIyNjdjY2FhZjU0YTZiYmIzIn0.5RJ66pxsbC1HoNwQJ29p96DGzlrtfLlf7XlVbW8MiCRVzC8dKolPQRjtNyrm9FaxCYe4vigkpiWQjTnURZ5DAQ';
+      ws = new WebSocket(url, null, {
+        headers: { Authorization: 'Bearer ' + token }
       });
-    };
 
-    ws.onclose = () => {
-      log.e('webSocket is close...');
-      reConnect();
-    };
+      ws.onopen = () => {
+        // 连接次数清空
+        connectCount = 0;
+        console.log('webSocket connect success');
+      };
+
+      ws.onmessage = ({ data }) => {
+        // const msgObj = JSON.parse(data);
+        // console.log('message data: ', new Date().toString(), msgObj);
+        // const sendBackObj = {
+        //   id: msgObj.id,
+        //   type: msgObj.type,
+        //   user: 12, // 固定
+        // };
+        // // 收到消息后，send back，会将该条消息标记为已读
+        // ws.send(JSON.stringify(sendBackObj));
+        // console.log(JSON.stringify(sendBackObj));
+        //
+        // notification._localNotification({
+        //   title: msgObj.title,
+        //   message: msgObj.content,
+        //   extraData: msgObj.sendbody,
+        // });
+      };
+
+      ws.onclose = () => {
+        console.log('webSocket is close...');
+        connectCount++;
+        startNewConnection(false);
+      };
+
+      ws.onerror = (event) => {
+        console.log('websocket error observed: ', event);
+      }
+
+    }
   }
 
-  // 初始化host
-  function getHost() {
-    const rootUrl = Preferences.getPreference(Preferences.KEYS.APP_ROOT_URL_KEY);
-    rootUrl ? host = rootUrl.substr(7, rootUrl.length) : log.d('rootUrl is undefined');
-  }
-
-  getHost();
   connect();
 
   // 服务端关闭webSocket onclose不触发，为保持连接每过一分钟发送消息
   BackgroundTimer.setInterval(function () {
-    if (ws && ws.readyState === 1) {
-      log.i('webSocket send keep alive' + new Date().toString());
-      ws.send('');
-    }
-  }, 1000 * 60);
+    countTimes++;
+    console.log('countTimes: ', countTimes);
 
-  /**
-   * js setTimeout 不生效
-   * 登录、网络变为可用的情况下会立即进行重新连接，此时会清除先前的定时器
-   * 登出、网络变为不可用断开连接
-   * @param isResetTimer
-   */
-  this.reConnect = (isResetTimer = false) => {
-    log.i('webSocket try reconnect...' + new Date().toString());
-    host ? log.d('host init success') : getHost();
-    if (isResetTimer) {
-      BackgroundTimer.clearTimeout(timeoutId);
-      connect();
-    } else {
-      timeoutId = BackgroundTimer.setTimeout(function () {
-        connect()
-      }, reConnectTime);
+    if (countTimes > 10) {
+      DeviceEventEmitter.emit('PushNotification', 'message send...');
     }
-  };
+
+    if (ws && ws.readyState === 1) {
+      ws.send('');
+      console.log('webSocket send keep alive at ' + new Date().toString());
+    }
+  }, 1000 * 5);
+
 }
 
-export { JDPushService }
+/**
+ * 登录、网络变为可用的情况下会立即进行重新连接，此时会清除先前的定时器
+ * 登出、网络变为不可用断开连接
+ * @param shouldResetTimer
+ * @param newHost
+ * @param newToken
+ */
+function startNewConnection(shouldResetTimer = false, newHost = '', newToken = '') {
+  host = newHost || host;
+  token = newToken || token;
+
+  console.log('webSocket try reconnect at ' + new Date().toString());
+  if (shouldResetTimer) {
+    BackgroundTimer.clearTimeout(timeoutId);
+    connect();
+  } else {
+    timeoutId = BackgroundTimer.setTimeout(function () {
+      connect()
+    }, reConnectTime);
+  }
+
+}
+
+function closeConnect() {
+  (ws && ws.readyState === 1) ? ws.close() : '';
+}
+
+export { JDPushService, closeConnect, startNewConnection }

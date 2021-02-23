@@ -40,5 +40,8 @@
     "react-native": "^0.61.5",
     "@react-native-community/netinfo": "^5.8.1",
     "react-native-background-timer": "^2.1.1"
+  },
+  "dependencies": {
+    "react-native-push-notification": "^7.2.1"
   }
 }
