@@ -122,8 +122,12 @@ async function JDPushService() {
 }
 
 /**
- * 登录、网络变为可用的情况下会立即进行重新连接，此时会清除先前的定时器
- * 登出、网络变为不可用断开连接
+ * 重新创建连接，在三种情况下调用:
+ * 1. 连接失败后
+ * 2. 登陆成功后
+ * 3. 网络状态发生改变且变为可用后
+ * 2.3 两种情况需清理先前的定时器
+ *
  * @param shouldResetTimer
  * @param newHost
  * @param newToken
@@ -144,6 +148,9 @@ function startNewConnection(shouldResetTimer = false, newHost = '', newToken = '
 
 }
 
+/**
+ * 登出或网络变为不可用断开连接
+ */
 function closeConnect() {
   (ws && ws.readyState === 1) ? ws.close() : '';
 }
