@@ -37,17 +37,13 @@ async function JDPushService() {
 
   let isFirstLoad = false;
 
-  function onRegister() {
-
-  }
-
-  function onNotif(notif) {
-    console.log('notif: ', notif);
+  // 推送消息处理
+  function handlingNotification(data) {
+    DeviceEventEmitter.emit('handlingPushNotification', data);
   }
 
   const notification = new NotificationService(
-    // onRegister,
-    onNotif,
+    handlingNotification,
   );
 
   // 网络变更事件监听，状态可用时，进行连接(模拟器网络发生变化不生效)
@@ -58,19 +54,12 @@ async function JDPushService() {
     isFirstLoad = true;
   })();
 
-  // 推送消息处理
-  function handlingNotification(data) {
-    DeviceEventEmitter.emit('handlingPushNotification', data);
-  }
-
   connect = function () {
-    notification.localNotif();
     if (host && token) {
       // 失败连接次数超过10次,改为15分钟重连
       connectCount > 9 ? reConnectTime = LONG_TIME : reConnectTime = SHORT_TIME;
       (ws && ws.readyState === 1) ? ws.close() : '';
       let url = `ws://${host}/websocket/push`;
-      // const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJjdCI6MywidWlkIjoiMTkxMDQ1IiwiaXNzIjoiZWFwIiwiZXhwIjoxNjE2NTc2NDc1LCJpYXQiOjE2MTM5ODQ0NzUsImp0aSI6ImVhcCIsInRlbmFudCI6Im1haW4iLCJrZXkiOiIyNjdjY2FhZjU0YTZiYmIzIn0.5RJ66pxsbC1HoNwQJ29p96DGzlrtfLlf7XlVbW8MiCRVzC8dKolPQRjtNyrm9FaxCYe4vigkpiWQjTnURZ5DAQ';
       ws = new WebSocket(url, null, {
         headers: { Authorization: 'Bearer ' + token }
       });
@@ -82,22 +71,23 @@ async function JDPushService() {
       };
 
       ws.onmessage = ({ data }) => {
-        // const msgObj = JSON.parse(data);
-        // console.log('message data: ', new Date().toString(), msgObj);
-        // const sendBackObj = {
-        //   id: msgObj.id,
-        //   type: msgObj.type,
-        //   user: 12, // 固定
-        // };
-        // // 收到消息后，send back，会将该条消息标记为已读
-        // ws.send(JSON.stringify(sendBackObj));
-        // console.log(JSON.stringify(sendBackObj));
-        //
-        // notification._localNotification({
-        //   title: msgObj.title,
-        //   message: msgObj.content,
-        //   extraData: msgObj.sendbody,
-        // });
+        const msgObj = JSON.parse(data);
+        const sendBackObj = {
+          id: msgObj.id,
+          type: msgObj.type,
+          user: 12, // 固定
+        };
+        // 收到消息后，send back，会将该条消息标记为已读
+        ws.send(JSON.stringify(sendBackObj));
+        console.log(JSON.stringify(sendBackObj));
+
+        const msgData = {
+          subText: msgObj.subTitle || '',
+          title: msgObj.title,
+          message: msgObj.content,
+          bigText: msgObj.content
+        };
+        notification.localNotif(msgData);
       };
 
       ws.onclose = () => {
