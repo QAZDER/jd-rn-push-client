@@ -37,6 +37,18 @@ async function JDPushService() {
 
   let isFirstLoad = false;
 
+  function onRegister() {
+
+  }
+
+  function onNotif(notif) {
+    console.log('notif: ', notif);
+  }
+
+  const notification = new NotificationService(
+    // onRegister,
+    onNotif,
+  );
 
   // 网络变更事件监听，状态可用时，进行连接(模拟器网络发生变化不生效)
   NetInfo.addEventListener((NetInfoState) => {
@@ -51,9 +63,8 @@ async function JDPushService() {
     DeviceEventEmitter.emit('handlingPushNotification', data);
   }
 
-  const notification = new NotificationService(handlingNotification);
-
   connect = function () {
+    notification.localNotif();
     if (host && token) {
       // 失败连接次数超过10次,改为15分钟重连
       connectCount > 9 ? reConnectTime = LONG_TIME : reConnectTime = SHORT_TIME;
