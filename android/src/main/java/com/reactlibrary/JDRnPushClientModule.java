@@ -3,11 +3,12 @@ package com.reactlibrary;
 import android.content.Intent;
 import android.util.Log;
 
+import com.facebook.react.HeadlessJsTaskService;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.reactlibrary.JDRnPushHeadlessService;
 import com.facebook.react.bridge.Callback;
-import com.reactlibrary.JDRnPushClientService;
 
 public class JDRnPushClientModule extends ReactContextBaseJavaModule {
 
@@ -23,10 +24,15 @@ public class JDRnPushClientModule extends ReactContextBaseJavaModule {
         return "JDRnPushClient";
     }
 
+    /**
+     * JS调用, 启动HeadlessService
+     */
     @ReactMethod
-    public void startPushService(Callback callback) {
-        Intent intent1 = new Intent(getReactApplicationContext(), JDRnPushClientService.class);
-        getReactApplicationContext().startService(intent1);
-        callback.invoke("PushService Start...");
+    public void startHeadlessService(Callback callback) {
+        Intent serviceIntent = new Intent(getReactApplicationContext(), JDRnPushHeadlessService.class);
+        getReactApplicationContext().startService(serviceIntent);
+        HeadlessJsTaskService.acquireWakeLockNow(getReactApplicationContext());
+
+        callback.invoke("ReactMethod Headless Service Start...");
     }
 }

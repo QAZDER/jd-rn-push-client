@@ -8,8 +8,12 @@ import com.facebook.react.HeadlessJsTaskService;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.jstasks.HeadlessJsTaskConfig;
 
-public class JDRnPushClientService extends HeadlessJsTaskService {
+import javax.annotation.Nullable;
 
+public class JDRnPushHeadlessService extends HeadlessJsTaskService {
+
+    @Nullable
+    @Override
     protected HeadlessJsTaskConfig getTaskConfig(Intent intent) {
         Bundle extras = intent.getExtras();
         return new HeadlessJsTaskConfig(
@@ -19,5 +23,4 @@ public class JDRnPushClientService extends HeadlessJsTaskService {
                 true
         );
     }
-
 }

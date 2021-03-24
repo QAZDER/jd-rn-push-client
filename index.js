@@ -1,5 +1,10 @@
 import { NativeModules } from 'react-native';
-export { JDPushService, closeConnect, startNewConnection } from './JDPushService';
+
+export {
+  JDPushService,
+  startNewConnection,
+  closeConnect,
+} from './JDPushService';
 
 const { JDRnPushClient } = NativeModules;
 
